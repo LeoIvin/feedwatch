@@ -2,7 +2,7 @@ name: JobBot
 
 on:
   schedule:
-    - cron: "*/10 * * * *"  # every 10 minutes (GitHub may delay by a few min)
+    - cron: "*/5 * * * *"  # every 5 minutes (GitHub's minimum; may drift a few min)
   workflow_dispatch: {}
 
 # Never let two runs race on the state file
@@ -25,11 +25,17 @@ jobs:
 
       - run: pip install -r requirements.txt
 
+      # GitHub cron can't fire more often than every 5 minutes, so each run
+      # polls 4 times ~45s apart for an effective ~1-min cadence.
       - name: Run JobBot
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python -m jobbot
+        run: |
+          for i in 1 2 3 4; do
+            python -m jobbot
+            [ "$i" -lt 4 ] && sleep 45
+          done
 
       - name: Commit updated state
         run: |
