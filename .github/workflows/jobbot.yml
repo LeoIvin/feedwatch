@@ -34,7 +34,7 @@ jobs:
         run: |
           for i in 1 2 3 4; do
             python -m jobbot
-            [ "$i" -lt 4 ] && sleep 45
+            if [ "$i" -lt 4 ]; then sleep 45; fi
           done
 
       - name: Commit updated state
