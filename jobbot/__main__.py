@@ -59,8 +59,8 @@ def main() -> int:
             print("TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID must be set.", file=sys.stderr)
             return 1
         updates = telegram.get_updates(token, state["tg_offset"])
-        for reply in commands.process_updates(updates, chat_id, state, base_companies):
-            telegram.send_long_message(token, chat_id, reply.split("\n"))
+        for target, reply in commands.process_updates(updates, chat_id, state, base_companies):
+            telegram.send_long_message(token, target, reply.split("\n"))
 
     companies = merged_companies(base_companies, state)
     jobs, errors = fetch_all(companies)
@@ -98,8 +98,13 @@ def main() -> int:
     elif new_matches and not state["filters"]["paused"]:
         header = f"🆕 <b>{len(new_matches)} new job posting{'s' if len(new_matches) != 1 else ''}</b>"
         lines = [header] + [telegram.format_job_line(j) for j in new_matches]
-        telegram.send_long_message(token, chat_id, lines)
-        print(f"Sent {len(new_matches)} new postings to Telegram.")
+        recipients = [chat_id] + [s for s in state.get("subscribers", []) if s != str(chat_id)]
+        for recipient in recipients:
+            try:
+                telegram.send_long_message(token, recipient, lines)
+            except Exception as exc:
+                print(f"warning: couldn't message {recipient}: {exc}", file=sys.stderr)
+        print(f"Sent {len(new_matches)} new postings to {len(recipients)} chat(s).")
     else:
         print("No new matching postings.")
 

@@ -61,12 +61,17 @@ repo after each run — that's how a stateless CI job remembers things.
 | `/companies` | list tracked company boards |
 | `/addcompany greenhouse stripe` | track a new board (validated before saving) |
 | `/delcompany greenhouse stripe` | stop tracking a board |
+| `/subscribers` | how many chats receive alerts |
+| `/stop` | unsubscribe the current chat |
+
+Anyone who sends the bot `/start` becomes a subscriber: they get the same
+alerts and can use the same commands. Filters and the company list are
+**shared** across all subscribers.
 
 ⏱ Commands are read at the start of each scheduled run, so replies can take up
 to ~30 minutes. (GitHub's cron can also drift a few minutes — normal.)
 
-Only messages from your `TELEGRAM_CHAT_ID` are honored; anyone else who finds
-the bot is ignored.
+Non-subscribers who message the bot are ignored until they send `/start`.
 
 ## Adding companies
 

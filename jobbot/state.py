@@ -18,6 +18,7 @@ DEFAULT_STATE = {
         "remote_only": False,
         "paused": False,
     },
+    "subscribers": [],       # extra chat ids subscribed via /start (owner is implicit)
     "extra_companies": {},   # ats -> [slug] added via /addcompany
     "removed_companies": [],  # "ats:slug" removed via /delcompany
     "tg_offset": 0,          # Telegram getUpdates offset

@@ -27,6 +27,8 @@ HELP_TEXT = """<b>JobBot commands</b>
 /companies — list tracked companies
 /addcompany &lt;ats&gt; &lt;slug&gt; — track a new company board
 /delcompany &lt;ats&gt; &lt;slug&gt; — stop tracking a board
+/subscribers — how many chats receive alerts
+/stop — unsubscribe this chat from alerts
 
 ATS values: greenhouse, lever, ashby, workable, smartrecruiters.
 Note: commands are processed on the next scheduled run (up to ~30 min)."""
@@ -109,6 +111,10 @@ def handle_command(text: str, state: dict, base_companies: dict) -> str:
         filters["paused"] = False
         return "Resumed. You'll get new postings from the next run onward."
 
+    if cmd == "/subscribers":
+        n = len(state.get("subscribers", []))
+        return f"{1 + n} chat(s) receive alerts (owner + {n} subscriber(s))."
+
     if cmd == "/companies":
         merged = merged_companies(base_companies, state)
         lines = ["<b>Tracked companies</b>"]
@@ -145,20 +151,51 @@ def handle_command(text: str, state: dict, base_companies: dict) -> str:
     return "Unrecognized command. Send /help for the list."
 
 
+WELCOME_TEXT = ("👋 <b>You're subscribed to job alerts!</b>\n"
+                "You'll receive new SWE postings from the tracked companies. "
+                "Note: filters and the company list are shared between all "
+                "subscribers during this test phase.\n\n")
+
+
 def process_updates(updates: list[dict], owner_chat_id: str, state: dict,
-                    base_companies: dict) -> list[str]:
-    """Apply owner commands from pending updates; returns replies to send."""
-    replies = []
+                    base_companies: dict) -> list[tuple[str, str]]:
+    """Apply commands from pending updates.
+
+    Anyone can subscribe with /start; subscribers share the owner's filters
+    and company list. Returns (chat_id, reply) pairs.
+    """
+    replies: list[tuple[str, str]] = []
+    subscribers = state.setdefault("subscribers", [])
     for update in updates:
         state["tg_offset"] = max(state["tg_offset"], update["update_id"] + 1)
         message = update.get("message") or update.get("edited_message")
         if not message:
             continue
-        if str(message.get("chat", {}).get("id")) != str(owner_chat_id):
-            continue  # ignore strangers
+        chat_id = str(message.get("chat", {}).get("id"))
         text = message.get("text", "")
-        if text.startswith("/"):
-            reply = handle_command(text, state, base_companies)
-            if reply:
-                replies.append(reply)
+        if not text.startswith("/"):
+            continue
+        cmd = text.split()[0].lower().split("@")[0]
+        is_member = chat_id == str(owner_chat_id) or chat_id in subscribers
+
+        if cmd == "/start":
+            if not is_member:
+                subscribers.append(chat_id)
+            replies.append((chat_id, WELCOME_TEXT + HELP_TEXT))
+            continue
+
+        if not is_member:
+            continue  # ignore strangers until they /start
+
+        if cmd == "/stop":
+            if chat_id in subscribers:
+                subscribers.remove(chat_id)
+                replies.append((chat_id, "Unsubscribed. Send /start to rejoin anytime."))
+            else:
+                replies.append((chat_id, "You're the owner — alerts always go to you."))
+            continue
+
+        reply = handle_command(text, state, base_companies)
+        if reply:
+            replies.append((chat_id, reply))
     return replies
