@@ -1,0 +1,32 @@
+{
+  "greenhouse": [
+    "stripe",
+    "gitlab",
+    "coinbase",
+    "databricks",
+    "cloudflare",
+    "figma",
+    "discord",
+    "brex"
+  ],
+  "lever": [
+    "palantir",
+    "kraken",
+    "plaid"
+  ],
+  "ashby": [
+    "openai",
+    "ramp",
+    "linear",
+    "supabase",
+    "deel"
+  ],
+  "workable": [
+    "kuda",
+    "moniepoint"
+  ],
+  "smartrecruiters": [
+    "servicenow",
+    "visa"
+  ]
+}

@@ -1,0 +1,43 @@
+name: JobBot
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"  # every 30 minutes (GitHub may delay by a few min)
+  workflow_dispatch: {}
+
+# Never let two runs race on the state file
+concurrency:
+  group: jobbot
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install -r requirements.txt
+
+      - name: Run JobBot
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python -m jobbot
+
+      - name: Commit updated state
+        run: |
+          git config user.name "jobbot"
+          git config user.email "jobbot@users.noreply.github.com"
+          git add state/state.json
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: update state"
+            git pull --rebase origin "${GITHUB_REF_NAME}"
+            git push
+          fi
