@@ -50,6 +50,7 @@ repo after each run — that's how a stateless CI job remembers things.
 | Command | Effect |
 |---|---|
 | `/help` | list commands |
+| `/recent` / `/recent 7` | matching postings from the last N days (default 3) |
 | `/filters` | show current filters |
 | `/addkeyword new grad` | only titles containing one of your keywords |
 | `/delkeyword new grad` | remove a keyword |

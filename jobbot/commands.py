@@ -5,10 +5,17 @@ scheduled run, so replies take effect on the next cycle. Only messages from
 the configured owner chat are honored.
 """
 
-from .ats import FETCHERS
+from datetime import datetime, timedelta, timezone
+
+from .ats import FETCHERS, fetch_all
+from .filters import matches
 from .state import merged_companies
+from .telegram import format_job_line
+
+MAX_RECENT_SHOWN = 30
 
 HELP_TEXT = """<b>JobBot commands</b>
+/recent [days] — matching postings from the last N days (default 3)
 /filters — show current filters
 /addkeyword &lt;word&gt; — title must contain one of your keywords
 /delkeyword &lt;word&gt; — remove a keyword
@@ -35,6 +42,23 @@ def handle_command(text: str, state: dict, base_companies: dict) -> str:
 
     if cmd in ("/start", "/help"):
         return HELP_TEXT
+
+    if cmd == "/recent":
+        days = int(args[0]) if args and args[0].isdigit() else 3
+        days = max(1, min(days, 30))
+        today = datetime.now(timezone.utc).date()
+        cutoff = (today - timedelta(days=days)).isoformat()
+        jobs, _ = fetch_all(merged_companies(base_companies, state))
+        # Jobs not yet in `seen` are brand new, so they count as today.
+        first_seen = lambda j: state["seen"].get(j.uid, today.isoformat())
+        recent = [j for j in jobs if matches(j, filters) and first_seen(j) >= cutoff]
+        if not recent:
+            return f"No matching postings from the last {days} day(s)."
+        recent.sort(key=first_seen, reverse=True)
+        header = f"🕑 <b>{len(recent)} matching posting(s) from the last {days} day(s)</b>"
+        if len(recent) > MAX_RECENT_SHOWN:
+            header += f" — showing newest {MAX_RECENT_SHOWN}"
+        return "\n".join([header] + [format_job_line(j) for j in recent[:MAX_RECENT_SHOWN]])
 
     if cmd == "/filters":
         return (

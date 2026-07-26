@@ -60,7 +60,7 @@ def main() -> int:
             return 1
         updates = telegram.get_updates(token, state["tg_offset"])
         for reply in commands.process_updates(updates, chat_id, state, base_companies):
-            telegram.send_message(token, chat_id, reply)
+            telegram.send_long_message(token, chat_id, reply.split("\n"))
 
     companies = merged_companies(base_companies, state)
     jobs, errors = fetch_all(companies)
