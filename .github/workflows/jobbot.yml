@@ -2,7 +2,7 @@ name: JobBot
 
 on:
   schedule:
-    - cron: "*/30 * * * *"  # every 30 minutes (GitHub may delay by a few min)
+    - cron: "*/10 * * * *"  # every 10 minutes (GitHub may delay by a few min)
   workflow_dispatch: {}
 
 # Never let two runs race on the state file
