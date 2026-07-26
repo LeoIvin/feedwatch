@@ -48,9 +48,11 @@ def get_updates(token: str, offset: int) -> list[dict]:
     return _call(token, "getUpdates", offset=offset, timeout=0)
 
 
-def format_job_line(job) -> str:
+def format_job_line(job, with_date: bool = False) -> str:
     title = html.escape(job.title)
     company = html.escape(job.company)
     location = html.escape(job.location)
     remote = " 🌍" if job.is_remote else ""
-    return f"• <a href=\"{html.escape(job.url)}\">{title}</a>\n   🏢 {company} · 📍 {location}{remote}"
+    date = f" · 🗓 {job.posted}" if with_date and job.posted else ""
+    return (f"• <a href=\"{html.escape(job.url)}\">{title}</a>\n"
+            f"   🏢 {company} · 📍 {location}{remote}{date}")

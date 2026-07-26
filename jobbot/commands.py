@@ -49,16 +49,18 @@ def handle_command(text: str, state: dict, base_companies: dict) -> str:
         today = datetime.now(timezone.utc).date()
         cutoff = (today - timedelta(days=days)).isoformat()
         jobs, _ = fetch_all(merged_companies(base_companies, state))
-        # Jobs not yet in `seen` are brand new, so they count as today.
-        first_seen = lambda j: state["seen"].get(j.uid, today.isoformat())
-        recent = [j for j in jobs if matches(j, filters) and first_seen(j) >= cutoff]
+        # Prefer the ATS's real published date; fall back to when the bot
+        # first saw the job (brand-new jobs count as today).
+        posted_on = lambda j: j.posted or state["seen"].get(j.uid, today.isoformat())
+        recent = [j for j in jobs if matches(j, filters) and posted_on(j) >= cutoff]
         if not recent:
             return f"No matching postings from the last {days} day(s)."
-        recent.sort(key=first_seen, reverse=True)
+        recent.sort(key=posted_on, reverse=True)
         header = f"🕑 <b>{len(recent)} matching posting(s) from the last {days} day(s)</b>"
         if len(recent) > MAX_RECENT_SHOWN:
             header += f" — showing newest {MAX_RECENT_SHOWN}"
-        return "\n".join([header] + [format_job_line(j) for j in recent[:MAX_RECENT_SHOWN]])
+        return "\n".join([header] + [format_job_line(j, with_date=True)
+                                     for j in recent[:MAX_RECENT_SHOWN]])
 
     if cmd == "/filters":
         return (

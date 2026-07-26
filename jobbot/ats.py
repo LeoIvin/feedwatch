@@ -21,6 +21,17 @@ class Job:
     location: str
     url: str
     is_remote: bool
+    posted: str = ""  # ISO date (YYYY-MM-DD) the posting went live, "" if unknown
+
+
+def _iso_date(value) -> str:
+    """'2026-07-25T16:39:07.428Z' or epoch millis -> '2026-07-25'."""
+    if isinstance(value, (int, float)):
+        from datetime import datetime, timezone
+        return datetime.fromtimestamp(value / 1000, tz=timezone.utc).date().isoformat()
+    if isinstance(value, str) and len(value) >= 10:
+        return value[:10]
+    return ""
 
 
 def _get_json(url: str, **kwargs):
@@ -42,6 +53,7 @@ def fetch_greenhouse(slug: str) -> list[Job]:
             location=location,
             url=j.get("absolute_url", ""),
             is_remote="remote" in location.lower(),
+            posted=_iso_date(j.get("first_published") or j.get("updated_at")),
         ))
     return jobs
 
@@ -60,6 +72,7 @@ def fetch_lever(slug: str) -> list[Job]:
             location=location,
             url=j.get("hostedUrl", ""),
             is_remote=remote,
+            posted=_iso_date(j.get("createdAt")),
         ))
     return jobs
 
@@ -79,6 +92,7 @@ def fetch_ashby(slug: str) -> list[Job]:
             location=location,
             url=j.get("jobUrl") or j.get("applyUrl", ""),
             is_remote=bool(j.get("isRemote")) or "remote" in location.lower(),
+            posted=_iso_date(j.get("publishedAt")),
         ))
     return jobs
 
@@ -106,6 +120,7 @@ def fetch_workable(slug: str) -> list[Job]:
                 location=location,
                 url=f"https://apply.workable.com/{slug}/j/{j['shortcode']}/",
                 is_remote=bool(j.get("remote")) or j.get("workplace") == "remote",
+                posted=_iso_date(j.get("published")),
             ))
         token = data.get("nextPage")
         if not token:
@@ -134,6 +149,7 @@ def fetch_smartrecruiters(slug: str) -> list[Job]:
                 location=location,
                 url=f"https://jobs.smartrecruiters.com/{slug}/{j['id']}",
                 is_remote=bool(loc.get("remote")) or "remote" in location.lower(),
+                posted=_iso_date(j.get("releasedDate")),
             ))
         offset += len(content)
         if not content or offset >= data.get("totalFound", 0):
