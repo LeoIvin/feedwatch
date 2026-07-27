@@ -1,12 +1,12 @@
-"""User-adjustable filtering on top of the baseline SWE title match."""
+"""User-adjustable filtering: keywords, locations, remote-only.
+
+All postings pass by default; only the user's filters narrow the feed.
+"""
 
 from .ats import Job
-from .config import is_swe_title
 
 
 def matches(job: Job, filters: dict) -> bool:
-    if not is_swe_title(job.title):
-        return False
     title = job.title.lower()
     location = job.location.lower()
 

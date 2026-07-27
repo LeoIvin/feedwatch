@@ -1,10 +1,10 @@
 # JobBot 🤖
 
-A serverless job-alert bot. Every 30 minutes, GitHub Actions polls the public
-JSON APIs of the top ATS platforms (Greenhouse, Lever, Ashby, Workable,
-SmartRecruiters) for the companies you track, and sends **new** software
-engineering postings straight to your Telegram. You control filters and the
-company list entirely from Telegram — no code changes, no server, no cost.
+A serverless job-alert bot. GitHub Actions polls the public JSON APIs of the
+top ATS platforms (Greenhouse, Lever, Ashby, Workable, SmartRecruiters) for
+the companies you track, and sends **new** postings straight to your
+Telegram. You control filters and the company list entirely from Telegram —
+no code changes, no server, no cost.
 
 No HTML scraping is involved: every ATS here exposes a public job-board API,
 so the bot is fast, polite, and doesn't break when a careers page is redesigned.
@@ -121,10 +121,12 @@ page URL:
 
 ## How matching works
 
-1. A posting's title must look like a SWE role (terms in
-   [jobbot/config.py](jobbot/config.py) — `ROLE_TERMS` / `ROLE_EXCLUDE_TERMS`).
-2. Your keyword / location / remote filters (from Telegram) are applied on top.
-3. Anything not seen before that survives both is sent to you; everything
-   fetched is remembered so loosening a filter later doesn't cause a flood.
+1. Every posting from every tracked board is eligible — there is no built-in
+   role filter.
+2. Your keyword / location / remote filters (set from Telegram) narrow the
+   feed; with no filters set, you get everything.
+3. Anything not seen before that survives the filters is sent to you;
+   everything fetched is remembered, so loosening a filter later doesn't
+   cause a flood.
 
 Seen-job history is pruned after 120 days to keep the state file small.

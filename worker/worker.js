@@ -11,17 +11,6 @@
  * OWNER_CHAT_ID, WEBHOOK_SECRET. Vars (wrangler.toml): GH_OWNER, GH_REPO.
  */
 
-const ROLE_TERMS = [
-  "software", "developer", "swe", "frontend", "front end", "front-end",
-  "backend", "back end", "back-end", "full stack", "full-stack", "fullstack",
-  "mobile engineer", "ios engineer", "android engineer", "devops",
-  "site reliability", "sre", "platform engineer", "infrastructure engineer",
-  "data engineer", "machine learning", "ml engineer", "ai engineer",
-  "security engineer", "cloud engineer", "web engineer", "qa engineer",
-  "test engineer", "release engineer", "reliability engineer",
-  "research engineer", "tech lead", "data scientist",
-];
-const ROLE_EXCLUDE_TERMS = ["mechanical", "electrical", "civil engineer", "recruiter", "sales"];
 const ATS_NAMES = ["greenhouse", "lever", "ashby", "workable", "smartrecruiters"];
 const MAX_RECENT_SHOWN = 30;
 const MAX_MESSAGE_CHARS = 3800;
@@ -46,7 +35,7 @@ ATS values: ${ATS_NAMES.join(", ")}.
 New-job alerts arrive within ~5 minutes of a posting going live.`;
 
 const WELCOME_TEXT = `👋 <b>You're subscribed to job alerts!</b>
-You'll receive new SWE postings from the tracked companies. Note: filters and the company list are shared between all subscribers during this test phase.
+You'll receive every new posting from the tracked companies — use keyword and location filters to narrow the feed. Note: filters and the company list are shared between all subscribers during this test phase.
 
 `;
 
@@ -63,14 +52,7 @@ export function escapeHtml(s) {
   return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-export function isSweTitle(title) {
-  const t = title.toLowerCase();
-  if (ROLE_EXCLUDE_TERMS.some((x) => t.includes(x))) return false;
-  return ROLE_TERMS.some((x) => t.includes(x));
-}
-
 export function matches(job, filters) {
-  if (!isSweTitle(job.title)) return false;
   const title = job.title.toLowerCase();
   const location = job.location.toLowerCase();
   const keywords = (filters.keywords || []).map((k) => k.toLowerCase());
@@ -275,7 +257,7 @@ export async function handleCommand(text, chatId, env, deps) {
 
     case "/filters":
       return "<b>Current filters</b>\n" +
-        `Keywords: ${filters.keywords.join(", ") || "(any SWE title)"}\n` +
+        `Keywords: ${filters.keywords.join(", ") || "(all titles)"}\n` +
         `Locations: ${filters.locations.join(", ") || "(anywhere)"}\n` +
         `Remote only: ${filters.remote_only ? "yes" : "no"}\n` +
         `Paused: ${filters.paused ? "yes" : "no"}`;
