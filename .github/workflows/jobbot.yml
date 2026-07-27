@@ -44,6 +44,8 @@ jobs:
           git add state/state.json
           if ! git diff --cached --quiet; then
             git commit -m "chore: update state"
-            git pull --rebase origin "${GITHUB_REF_NAME}"
+            # -X theirs: on state-file conflicts with a concurrent run's push,
+            # keep this run's version (it was computed from the freshest fetch)
+            git pull --rebase -X theirs origin "${GITHUB_REF_NAME}"
             git push
           fi
