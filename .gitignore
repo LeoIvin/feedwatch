@@ -3,3 +3,4 @@ __pycache__/
 .env
 .venv/
 schedule.py
+.webhook_secret
