@@ -18,7 +18,8 @@ const ROLE_TERMS = [
   "site reliability", "sre", "platform engineer", "infrastructure engineer",
   "data engineer", "machine learning", "ml engineer", "ai engineer",
   "security engineer", "cloud engineer", "web engineer", "qa engineer",
-  "test engineer",
+  "test engineer", "release engineer", "reliability engineer",
+  "research engineer", "tech lead", "data scientist",
 ];
 const ROLE_EXCLUDE_TERMS = ["mechanical", "electrical", "civil engineer", "recruiter", "sales"];
 const ATS_NAMES = ["greenhouse", "lever", "ashby", "workable", "smartrecruiters"];

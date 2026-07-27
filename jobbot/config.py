@@ -39,6 +39,11 @@ ROLE_TERMS = [
     "web engineer",
     "qa engineer",
     "test engineer",
+    "release engineer",
+    "reliability engineer",
+    "research engineer",
+    "tech lead",
+    "data scientist",
 ]
 
 # Titles containing any of these are dropped even if a role term matched.
