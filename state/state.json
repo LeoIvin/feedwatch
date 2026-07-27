@@ -1,13 +1,27 @@
 {
- "extra_companies": {},
- "filters": {
-  "keywords": [],
-  "locations": [],
-  "paused": false,
-  "remote_only": false
- },
  "initialized": true,
- "removed_companies": [],
+ "known_companies": [
+  "ashby:deel",
+  "ashby:linear",
+  "ashby:openai",
+  "ashby:ramp",
+  "ashby:supabase",
+  "greenhouse:brex",
+  "greenhouse:cloudflare",
+  "greenhouse:coinbase",
+  "greenhouse:databricks",
+  "greenhouse:discord",
+  "greenhouse:figma",
+  "greenhouse:gitlab",
+  "greenhouse:stripe",
+  "lever:kraken",
+  "lever:palantir",
+  "lever:plaid",
+  "smartrecruiters:servicenow",
+  "smartrecruiters:visa",
+  "workable:kuda",
+  "workable:moniepoint"
+ ],
  "seen": {
   "ashby:linear:069c4628-88d7-4e4d-b393-c996fc7f3076": "2026-07-26",
   "ashby:linear:0c7c2e26-0a98-42cf-a47c-9a3999fb513b": "2026-07-26",
@@ -299,6 +313,7 @@
   "ashby:openai:5834b531-bb89-4471-9253-8c30bc0b26a8": "2026-07-26",
   "ashby:openai:5839b9a2-7d92-452a-8b56-06f8c3f97b75": "2026-07-26",
   "ashby:openai:584fc51a-1107-457c-b499-a94fe5ef02b4": "2026-07-26",
+  "ashby:openai:58f32cbe-8c68-415c-bb7f-b6fca4b29ffc": "2026-07-27",
   "ashby:openai:5931abef-191b-417e-89f1-1d06f00e908c": "2026-07-26",
   "ashby:openai:596e543a-0ab9-471e-a1ff-40fd55c74fce": "2026-07-26",
   "ashby:openai:5a4eed17-29d5-41cb-856e-09bfdaffe017": "2026-07-26",
@@ -3398,6 +3413,7 @@
   "greenhouse:stripe:8069155": "2026-07-26",
   "greenhouse:stripe:8069506": "2026-07-26",
   "greenhouse:stripe:8069629": "2026-07-26",
+  "greenhouse:stripe:8069694": "2026-07-27",
   "greenhouse:stripe:8069941": "2026-07-26",
   "greenhouse:stripe:8070044": "2026-07-26",
   "greenhouse:stripe:8070054": "2026-07-26",
@@ -3429,6 +3445,7 @@
   "greenhouse:stripe:8080614": "2026-07-26",
   "greenhouse:stripe:8081418": "2026-07-26",
   "greenhouse:stripe:8081423": "2026-07-27",
+  "greenhouse:stripe:8081754": "2026-07-27",
   "greenhouse:stripe:8082149": "2026-07-26",
   "greenhouse:stripe:8083464": "2026-07-26",
   "greenhouse:stripe:8083685": "2026-07-26",
@@ -4187,6 +4204,7 @@
   "smartrecruiters:servicenow:744000140019789": "2026-07-27",
   "smartrecruiters:servicenow:744000140029747": "2026-07-27",
   "smartrecruiters:servicenow:744000140045289": "2026-07-27",
+  "smartrecruiters:servicenow:744000140049937": "2026-07-27",
   "smartrecruiters:visa:744000129971988": "2026-07-26",
   "smartrecruiters:visa:744000133907678": "2026-07-26",
   "workable:kuda:0508B55843": "2026-07-26",
@@ -4202,9 +4220,5 @@
   "workable:kuda:E737361898": "2026-07-26",
   "workable:kuda:FC2DB1591E": "2026-07-27",
   "workable:kuda:FFFE3F7F2E": "2026-07-26"
- },
- "subscribers": [
-  "8677093302"
- ],
- "tg_offset": 99318846
+ }
 }

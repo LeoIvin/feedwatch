@@ -41,7 +41,7 @@ jobs:
         run: |
           git config user.name "jobbot"
           git config user.email "jobbot@users.noreply.github.com"
-          git add state/state.json
+          git add state/state.json data/jobs.json
           if ! git diff --cached --quiet; then
             git commit -m "chore: update state"
             # -X theirs: on state-file conflicts with a concurrent run's push,

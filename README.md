@@ -68,10 +68,42 @@ Anyone who sends the bot `/start` becomes a subscriber: they get the same
 alerts and can use the same commands. Filters and the company list are
 **shared** across all subscribers.
 
-⏱ Commands are read at the start of each scheduled run, so replies can take up
-to ~30 minutes. (GitHub's cron can also drift a few minutes — normal.)
+⚡ Commands are answered instantly by a Cloudflare Worker webhook (see below).
+New-job alerts arrive within ~5 minutes of a posting going live.
 
 Non-subscribers who message the bot are ignored until they send `/start`.
+
+## Architecture
+
+- **Scraper** (`jobbot/`, Python) — runs on GitHub Actions every 5 minutes:
+  fetches all boards, sends new-job alerts to every subscriber, and commits
+  `state/state.json` (seen jobs — its own file) and `data/jobs.json`
+  (a snapshot of all current postings) back to the repo.
+- **Command worker** (`worker/`, Cloudflare Worker) — receives every Telegram
+  message via webhook and replies in milliseconds. Reads `data/jobs.json`
+  for `/recent`; owns and writes `data/filters.json` (filters, subscribers,
+  company changes) via the GitHub API. The scraper only reads that file, so
+  each file has exactly one writer and commits never conflict.
+
+## Deploying the command worker
+
+1. Create a free [Cloudflare account](https://dash.cloudflare.com/sign-up),
+   then: `cd worker && npx wrangler login`
+2. Create a [fine-grained GitHub PAT](https://github.com/settings/personal-access-tokens/new)
+   scoped to **only this repo** with **Contents: Read and write**.
+3. Set the four secrets (each command prompts for the value):
+   ```bash
+   npx wrangler secret put TELEGRAM_BOT_TOKEN
+   npx wrangler secret put GITHUB_TOKEN
+   npx wrangler secret put OWNER_CHAT_ID
+   npx wrangler secret put WEBHOOK_SECRET   # any random string
+   ```
+4. `npx wrangler deploy` — note the printed `*.workers.dev` URL.
+5. Point Telegram at it:
+   ```bash
+   curl "https://api.telegram.org/bot<TOKEN>/setWebhook" \
+     -d "url=<WORKER_URL>" -d "secret_token=<WEBHOOK_SECRET>"
+   ```
 
 ## Adding companies
 

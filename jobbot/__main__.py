@@ -1,20 +1,28 @@
-"""Entry point: process pending Telegram commands, fetch boards, notify.
+"""Entry point: fetch boards, publish the jobs blob, alert subscribers.
+
+Telegram commands are handled in real time by the webhook worker (worker/);
+this process only scrapes and sends alerts.
 
 Usage:
   python -m jobbot                 # normal run (needs TELEGRAM_* env vars)
   python -m jobbot --dry-run       # fetch + filter, print to stdout, no state changes
-  python -m jobbot --get-chat-id   # discover your chat id after messaging the bot
+  python -m jobbot --get-chat-id   # setup helper (only works before the webhook is set)
 """
 
 import argparse
+import json
 import os
 import sys
+from dataclasses import asdict
 from datetime import datetime, timezone
 
-from . import commands, filters, telegram
+from . import filters, telegram
 from .ats import fetch_all
-from .config import load_companies, load_dotenv
-from .state import load_state, merged_companies, prune_seen, save_state
+from .config import ROOT, load_companies, load_dotenv
+from .state import load_state, prune_seen, save_state
+from .userconfig import load_userconfig, merged_companies
+
+JOBS_FILE = ROOT / "data" / "jobs.json"
 
 
 def print_chat_ids(token: str) -> None:
@@ -30,6 +38,15 @@ def print_chat_ids(token: str) -> None:
         return
     for chat_id, name in chats.items():
         print(f"chat_id: {chat_id}  ({name})")
+
+
+def write_jobs_blob(jobs) -> None:
+    JOBS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    data = {
+        "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "jobs": [asdict(j) for j in sorted(jobs, key=lambda j: j.uid)],
+    }
+    JOBS_FILE.write_text(json.dumps(data, separators=(",", ":")))
 
 
 def main() -> int:
@@ -51,27 +68,27 @@ def main() -> int:
         return 0
 
     state = load_state()
-    base_companies = load_companies()
-
-    if not args.dry_run:
-        chat_id = os.environ.get("TELEGRAM_CHAT_ID", "")
-        if not token or not chat_id:
-            print("TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID must be set.", file=sys.stderr)
-            return 1
-        updates = telegram.get_updates(token, state["tg_offset"])
-        for target, reply in commands.process_updates(updates, chat_id, state, base_companies):
-            telegram.send_long_message(token, target, reply.split("\n"))
-
-    companies = merged_companies(base_companies, state)
+    config = load_userconfig()
+    companies = merged_companies(load_companies(), config)
     jobs, errors = fetch_all(companies)
     for err in errors:
         print(f"warning: {err}", file=sys.stderr)
     print(f"Fetched {len(jobs)} postings from "
           f"{sum(len(v) for v in companies.values())} company boards.")
 
+    # A company scraped for the first time gets baselined silently so
+    # /addcompany never floods subscribers with its whole backlog.
+    current_companies = sorted(
+        f"{ats}:{slug}" for ats, slugs in companies.items() for slug in slugs
+    )
+    known = set(state["known_companies"]) if state["known_companies"] is not None \
+        else set(current_companies)
+
     new_matches = [
         j for j in jobs
-        if j.uid not in state["seen"] and filters.matches(j, state["filters"])
+        if j.uid not in state["seen"]
+        and f"{j.ats}:{j.company}" in known
+        and filters.matches(j, config["filters"])
     ]
 
     if args.dry_run:
@@ -82,9 +99,16 @@ def main() -> int:
                   f"    {job.url}")
         return 0
 
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID", "")
+    if not token or not chat_id:
+        print("TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID must be set.", file=sys.stderr)
+        return 1
+
     today = datetime.now(timezone.utc).date().isoformat()
     for job in jobs:
         state["seen"].setdefault(job.uid, today)
+    state["known_companies"] = current_companies
+    write_jobs_blob(jobs)
 
     if not state["initialized"]:
         state["initialized"] = True
@@ -95,10 +119,10 @@ def main() -> int:
             f"({len(jobs)} current postings baselined as seen).\n"
             "You'll be notified about new postings from now on. Send /help for commands.",
         )
-    elif new_matches and not state["filters"]["paused"]:
+    elif new_matches and not config["filters"]["paused"]:
         header = f"🆕 <b>{len(new_matches)} new job posting{'s' if len(new_matches) != 1 else ''}</b>"
         lines = [header] + [telegram.format_job_line(j) for j in new_matches]
-        recipients = [chat_id] + [s for s in state.get("subscribers", []) if s != str(chat_id)]
+        recipients = [chat_id] + [s for s in config["subscribers"] if s != str(chat_id)]
         for recipient in recipients:
             try:
                 telegram.send_long_message(token, recipient, lines)
